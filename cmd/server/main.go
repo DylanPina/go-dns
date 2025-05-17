@@ -38,7 +38,7 @@ func main() {
 		receivedData := string(buf[:size])
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
-		response := []byte{}
+		response := []byte("Hello from server!")
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
