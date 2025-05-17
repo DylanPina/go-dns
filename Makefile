@@ -1,6 +1,7 @@
 SERVER_BIN=go-dns-server
 SERVER_SRC=cmd/server/main.go
 SERVER_TEST_SRC=cmd/server/main_test.go
+SERVER_PORT=7777
 
 .PHONY: run clean all test
 
@@ -9,16 +10,12 @@ build:
 
 run: build
 	@echo "Starting server..."
-	./$(SERVER_BIN) &
+	@./$(SERVER_BIN) --port $(SERVER_PORT) &
 
-test: build
-	@echo "Starting server..."
-	./$(SERVER_BIN) &
-
-	@go test -v $(SERVER_TEST_SRC)
-
-	@make kill
-	@make clean
+test: build run
+	@echo "Running tests..."
+	go test -v $(SERVER_TEST_SRC)
+	@make kill clean
 
 clean:
 	@echo "Cleaning up..."
@@ -26,6 +23,6 @@ clean:
 
 kill: 
 	@echo "Stopping server..."
-	@kill -9 $$(lsof -t -i udp:2053)
+	@kill -9 $$(lsof -t -i udp:$(SERVER_PORT))
 
 all: build run kill clean

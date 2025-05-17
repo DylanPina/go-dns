@@ -1,12 +1,17 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 )
 
 func main() {
-	udpAddr, err := net.ResolveUDPAddr("udp", "127.0.0.1:2053")
+	port := flag.Int("port", 2053, "Port that the DNS server to listen on (default: 2053)")
+	flag.Parse()
+
+	addr := fmt.Sprintf(":%d", *port)
+	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
 		fmt.Println("Failed to resolve UDP address:", err)
 		return
@@ -18,6 +23,8 @@ func main() {
 		return
 	}
 	defer udpConn.Close()
+
+	fmt.Println("Server listening on ", udpAddr)
 
 	buf := make([]byte, 512)
 
