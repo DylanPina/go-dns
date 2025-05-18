@@ -52,3 +52,5 @@ func ConnectUDP(port int, method, path string, headers map[string]string, body [
 
 	return resp[:n], nil
 }
+
+func DNSQuery() {}

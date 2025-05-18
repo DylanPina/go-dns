@@ -4,6 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"net"
+	"os"
+
+	"github.com/DylanPina/go-dns-server/internal/dns"
 )
 
 func main() {
@@ -13,13 +16,13 @@ func main() {
 	addr := fmt.Sprintf(":%d", *port)
 	udpAddr, err := net.ResolveUDPAddr("udp", addr)
 	if err != nil {
-		fmt.Println("Failed to resolve UDP address:", err)
+		fmt.Fprintln(os.Stderr, "Failed to resolve UDP address:", err)
 		return
 	}
 
 	udpConn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
-		fmt.Println("Failed to bind to address:", err)
+		fmt.Fprintln(os.Stderr, "Failed to bind to address:", err)
 		return
 	}
 	defer udpConn.Close()
@@ -31,18 +34,30 @@ func main() {
 	for {
 		size, source, err := udpConn.ReadFromUDP(buf)
 		if err != nil {
-			fmt.Println("Error receiving data:", err)
+			fmt.Fprintln(os.Stderr, "Error receiving data:", err)
 			break
 		}
 
-		receivedData := string(buf[:size])
+		receivedData := buf[:size]
 		fmt.Printf("Received %d bytes from %s: %s\n", size, source, receivedData)
 
-		response := []byte("Hello from server!")
+		header, err := dns.DecodeDNSHeader(receivedData)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to decode DNS header:", err)
+			continue
+		}
+
+		response, err := header.Encode()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to encode DNS header:", err)
+			continue
+		}
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
-			fmt.Println("Failed to send response:", err)
+			fmt.Fprintln(os.Stderr, "Failed to send response:", err)
 		}
+
+		fmt.Printf("Sent %d bytes to %s: %s\n", len(response), source, string(response))
 	}
 }
