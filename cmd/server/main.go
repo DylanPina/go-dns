@@ -47,17 +47,33 @@ func main() {
 			continue
 		}
 
-		response, err := header.Encode()
+		responseHeader, err := header.Encode()
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to encode DNS header:", err)
 			continue
 		}
+
+		question, err := dns.DecodeDNSQuestion(receivedData[12:])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to decode DNS question:", err)
+			continue
+		}
+
+		responseQuestion, err := question.Encode()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to encode DNS question:", err)
+			continue
+		}
+
+		response := make([]byte, 0, len(responseHeader)+len(responseQuestion))
+		response = append(response, responseHeader...)
+		response = append(response, responseQuestion...)
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Failed to send response:", err)
 		}
 
-		fmt.Printf("Sent %d bytes to %s: %s\n", len(response), source, string(response))
+		fmt.Printf("Sent %d bytes to %s: %v\n", len(response), source, response)
 	}
 }
