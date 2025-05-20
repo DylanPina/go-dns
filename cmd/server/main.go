@@ -65,9 +65,17 @@ func main() {
 			continue
 		}
 
-		response := make([]byte, 0, len(responseHeader)+len(responseQuestion))
+		answer := dns.DNSAnswer{}
+		responseAnswer, err := answer.Encode()
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "Failed to encode DNS answer:", err)
+			continue
+		}
+
+		response := make([]byte, 0, len(responseHeader)+len(responseQuestion)+len(responseAnswer))
 		response = append(response, responseHeader...)
 		response = append(response, responseQuestion...)
+		response = append(response, responseAnswer...)
 
 		_, err = udpConn.WriteToUDP(response, source)
 		if err != nil {
